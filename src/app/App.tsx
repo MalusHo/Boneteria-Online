@@ -1,13 +1,21 @@
 import { RouterProvider } from "react-router";
-import { AppProvider, useApp } from "./context/AppContext"; // ImportamosuseApp
+import { AppProvider, useApp } from "./context/AppContext";
 import { router } from "./routes";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
-import { auth } from "../config/firebase"; // Asegúrate de ajustar la ruta a tu config de Firebase
+import { auth } from "../config/firebase";
 
+
+// --- COMPONENTE INTERNO ---
+
+/**
+ * Componente secundario que evalúa el estado de autenticación y la verificación
+ * del correo electrónico del usuario para restringir o permitir el acceso a las rutas.
+ */
 function AppContent() {
   const { user, isEmailVerified, resendVerification, checkVerificationStatus, logout, loading } = useApp();
 
+  // Mostrar pantalla de carga provisional mientras se determina el estado de la sesión
   if (loading) {
     return (
       <div style={{ backgroundColor: "#111827", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "sans-serif" }}>
@@ -16,7 +24,7 @@ function AppContent() {
     );
   }
 
-  // Si hay un usuario pero no está verificado, bloqueamos por completo el RouterProvider
+  // Restringir el acceso total a las rutas si el usuario no ha verificado su cuenta
   if (user && !isEmailVerified) {
     return (
       <div style={{
@@ -34,6 +42,7 @@ function AppContent() {
           <button 
             onClick={async () => {
               await checkVerificationStatus();
+              // Notificar al usuario basándose en el estado actualizado en Firebase Authentication
               if (auth.currentUser?.emailVerified) {
                 toast.success("¡Cuenta verificada con éxito!");
               } else {
@@ -51,6 +60,7 @@ function AppContent() {
                 await resendVerification();
                 toast.success("Te hemos reenviado el enlace de verificación.");
               } catch (err) {
+                // Evitar saturación de peticiones controlando el error del reenvío inmediato
                 toast.error("Espera un momento antes de solicitar otro correo.");
               }
             }}
@@ -70,11 +80,17 @@ function AppContent() {
     );
   }
 
-  // Si está verificado o es un invitado, se desbloquean las rutas normales
+  // Permitir el flujo normal de navegación si pasa de forma segura las validaciones anteriores
   return <RouterProvider router={router} />;
 }
 
-// El componente principal solo se encarga de envolver todo en los Providers globales
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Raíz de la aplicación que se encarga de inicializar los proveedores
+ * globales de contexto y el manejador de notificaciones visuales (Toaster).
+ */
 export default function App() {
   return (
     <AppProvider>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApp, Product } from "../../context/AppContext"; // Importamos el tipo Product
+import { useApp, Product } from "../../context/AppContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -9,21 +9,26 @@ import { ShoppingCart, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página que renderiza el catálogo general de la tienda.
+ * Permite realizar búsquedas por texto y filtrados dinámicos por categorías y subcategorías.
+ */
 export function StorePage() {
   const { products, addToCart, user } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas las categorías");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("Todas");
 
-  // 1. EXTRAER CATEGORÍAS REALES EN TIEMPO REAL
-  // Obtenemos un set de categorías únicas que existan actualmente en los productos de la BD
+  // Evitar duplicados obteniendo un conjunto de categorías únicas de los productos activos
   const uniqueCategories = Array.from(
     new Set(products.map((product) => product.category).filter(Boolean))
   );
   const categories = ["Todas las categorías", ...uniqueCategories];
 
-  // 2. EXTRAER SUBCATEGORÍAS REALES SEGÚN LA CATEGORÍA SELECCIONADA
-  // Filtramos los productos por la categoría activa y extraemos sus subcategorías únicas
+  // Filtrar subcategorías dinámicamente según la categoría seleccionada por el usuario
   const uniqueSubcategories = selectedCategory !== "Todas las categorías"
     ? Array.from(
         new Set(
@@ -36,7 +41,7 @@ export function StorePage() {
     : [];
   const subcategories = ["Todas", ...uniqueSubcategories];
 
-  // 3. FILTRADO FINAL DE PRODUCTOS
+  // Aplicar criterios de búsqueda de texto, categoría y subcategoría de forma simultánea
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -45,11 +50,13 @@ export function StorePage() {
     return matchesSearch && matchesCategory && matchesSubcategory;
   });
 
+  // Restablecer el filtro de subcategoría al cambiar la categoría padre
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedSubcategory("Todas");
   };
 
+  // Validar sesión activa y disponibilidad de existencias antes de modificar el carrito
   const handleAddToCart = (product: Product) => {
     if (!user) {
       toast.error("Por favor inicia sesión para agregar productos al carrito");
@@ -93,7 +100,7 @@ export function StorePage() {
             </SelectContent>
           </Select>
 
-          {/* El selector de subcategorías ahora solo aparece si la categoría tiene subcategorías reales en la BD */}
+          {/* Renderizar el selector de subcategorías condicionalmente si existen elementos válidos */}
           {selectedCategory !== "Todas las categorías" && uniqueSubcategories.length > 0 && (
             <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
               <SelectTrigger className="w-full sm:w-[200px] border-2 shadow-sm" style={{ borderColor: '#F08781', backgroundColor: '#ffffff' }}>
@@ -159,6 +166,7 @@ export function StorePage() {
         ))}
       </div>
 
+      {/* Mostrar un mensaje de retroalimentación si el resultado de los filtros es vacío */}
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No se encontraron productos</p>

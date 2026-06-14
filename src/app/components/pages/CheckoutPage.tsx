@@ -8,17 +8,37 @@ import { Separator } from "../ui/separator";
 import { CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+
+// --- CONSTANTES DE CONFIGURACIÓN ---
+
+// Catálogo estático de sucursales de la empresa para la recolección física de mercancía
+const PICKUP_STORES = [
+  "Bonetería El Combate Centro - Av. Principal 123",
+  "Bonetería El Combate Norte - Plaza del Norte Local 45",
+  "Bonetería El Combate Sur - Centro Comercial Sur Piso 2",
+];
+
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página que gestiona el proceso de cierre de compra (Checkout).
+ * Permite al usuario seleccionar la sucursal de recolección y procesar el registro
+ * formal de la orden de compra dentro de la base de datos de Firestore.
+ */
 export function CheckoutPage() {
   const { cart, createOrder, user } = useApp();
   const navigate = useNavigate();
   const [pickupStore, setPickupStore] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false); // Estado para controlar la carga
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Redireccionar inmediatamente al inicio de sesión si no hay una sesión activa
   if (!user) {
     navigate("/login");
     return null;
   }
 
+  // Prevenir que se intente procesar una transacción con un carrito de compras vacío
   if (cart.length === 0) {
     navigate("/cart");
     return null;
@@ -27,15 +47,11 @@ export function CheckoutPage() {
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const total = subtotal;
 
-  const stores = [
-    "Bonetería El Combate Centro - Av. Principal 123",
-    "Bonetería El Combate Norte - Plaza del Norte Local 45",
-    "Bonetería El Combate Sur - Centro Comercial Sur Piso 2",
-  ];
-
+  // Manejar el envío del formulario realizando validaciones y persistiendo la orden en Firestore
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validar de forma local que se haya seleccionado un destino válido para el retiro
     if (!pickupStore) {
       toast.error("Por favor selecciona una tienda para recoger");
       return;
@@ -44,7 +60,7 @@ export function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      // Llamada asíncrona a Firestore
+      // Registrar la orden con el método de entrega presencial estructurado para el negocio
       await createOrder({
         items: cart,
         total,
@@ -80,7 +96,7 @@ export function CheckoutPage() {
                   <SelectValue placeholder="Selecciona una tienda" />
                 </SelectTrigger>
                 <SelectContent>
-                  {stores.map((store) => (
+                  {PICKUP_STORES.map((store) => (
                     <SelectItem key={store} value={store}>
                       {store}
                     </SelectItem>
@@ -146,6 +162,7 @@ export function CheckoutPage() {
                 <span>MXN ${total.toFixed(2)}</span>
               </div>
 
+              {/* Bloquear interacción y mostrar animación de carga durante la escritura en la base de datos */}
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>

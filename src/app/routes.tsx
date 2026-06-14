@@ -8,11 +8,20 @@ import { LoginPage } from "./components/pages/LoginPage";
 import { SignupPage } from "./components/pages/SignupPage";
 import { OrdersPage } from "./components/pages/OrdersPage";
 
+
+// --- CONFIGURACIÓN DE RUTAS ---
+
+/**
+ * Enrutador principal de la aplicación que define la jerarquía de navegación
+ * y mapea las URLs a sus componentes correspondientes usando React Router.
+ */
 export const router = createBrowserRouter([
   {
+    // Definir el diseño base que servirá de contenedor general para las páginas
     path: "/",
     Component: RootLayout,
     children: [
+      // Vista principal por defecto que carga el catálogo de la tienda
       { index: true, Component: StorePage },
       { path: "cart", Component: CartPage },
       { path: "checkout", Component: CheckoutPage },

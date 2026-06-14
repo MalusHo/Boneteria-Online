@@ -5,10 +5,19 @@ import { Badge } from "../ui/badge";
 import { Package, Home, Store, Calendar } from "lucide-react";
 import { Button } from "../ui/button";
 
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página que renderiza el historial de pedidos del usuario.
+ * Si el usuario cuenta con el rol de administrador, la vista se adapta para 
+ * desplegar el total de pedidos globales registrados en la plataforma.
+ */
 export function OrdersPage() {
   const { orders, user } = useApp();
   const navigate = useNavigate();
 
+  // Restringir el acceso a la vista si no se ha detectado una sesión activa
   if (!user) {
     return (
       <div className="text-center py-12">
@@ -18,9 +27,10 @@ export function OrdersPage() {
     );
   }
 
-  // OPTIMIZACIÓN: Las órdenes ya vienen filtradas correctamente desde Firestore en el AppContext
+  // Evitar duplicación de consultas delegando el filtrado por usuario al AppContext y Firestore
   const userOrders = orders;
 
+  // Determinar la variante visual del Badge según el estado de la orden
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: "secondary",
@@ -33,6 +43,7 @@ export function OrdersPage() {
     return variants[status] || "default";
   };
 
+  // Traducir los identificadores técnicos de estados a etiquetas legibles en español
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       pending: "Pendiente",
@@ -45,6 +56,7 @@ export function OrdersPage() {
     return labels[status] || status;
   };
 
+  // Mostrar una pantalla vacía opcional con llamado a la acción si no existen compras registradas
   if (userOrders.length === 0) {
     return (
       <div className="text-center py-12">
@@ -115,6 +127,7 @@ export function OrdersPage() {
                   </div>
                 ))}
 
+                {/* Desplegar la dirección de entrega únicamente si el método seleccionado es a domicilio */}
                 {order.deliveryAddress && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm font-medium">Dirección de entrega:</p>
@@ -122,6 +135,7 @@ export function OrdersPage() {
                   </div>
                 )}
 
+                {/* Desplegar la sucursal de destino únicamente si el método seleccionado es recolección física */}
                 {order.pickupStore && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm font-medium">Tienda de recogida:</p>

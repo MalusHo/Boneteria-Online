@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp, Product, Order } from "../../context/AppContext";
-import { db } from "../../../config/firebase"; // Importación directa para el CRUD
+import { db } from "../../../config/firebase";
 import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -13,11 +13,19 @@ import { Badge } from "../ui/badge";
 import { Plus, Edit2, Trash2, Package, ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página para el panel de administración de la plataforma.
+ * Proporciona interfaces de control para la gestión del inventario global (CRUD de productos)
+ * y la actualización del estado logístico de los pedidos de la tienda en Firestore.
+ */
 export function AdminPage() {
   const { products, orders, user, updateOrderStatus } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Estados para el formulario de producto (Crear / Editar)
+  // Estados locales para el control y persistencia de campos del formulario de productos
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -28,7 +36,7 @@ export function AdminPage() {
   const [image, setImage] = useState("");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
 
-  // Seguridad: Bloquear si no es admin
+  // Validar credenciales de sesión y privilegios de rol para impedir accesos no autorizados
   if (!user || user.role !== "admin") {
     return (
       <div className="text-center py-12">
@@ -38,6 +46,7 @@ export function AdminPage() {
     );
   }
 
+  // Restablecer los estados del formulario a sus valores iniciales por defecto
   const resetForm = () => {
     setEditingProduct(null);
     setName("");
@@ -50,6 +59,7 @@ export function AdminPage() {
     setLowStockThreshold("5");
   };
 
+  // Cargar la información del producto seleccionado en los estados del formulario para su modificación
   const handleEditClick = (product: Product) => {
     setEditingProduct(product);
     setName(product.name);
@@ -62,6 +72,7 @@ export function AdminPage() {
     setLowStockThreshold(product.lowStockThreshold.toString());
   };
 
+  // Procesar el envío del formulario para la creación o actualización de registros en Firestore
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -79,12 +90,12 @@ export function AdminPage() {
 
     try {
       if (editingProduct) {
-        // ACTUALIZAR (U del CRUD) en Firestore
+        // Actualizar de forma directa el documento existente del producto mediante su UID
         const productRef = doc(db, "products", editingProduct.id);
         await updateDoc(productRef, productData);
         toast.success("Producto actualizado correctamente");
       } else {
-        // CREAR (C del CRUD) en Firestore
+        // Registrar un nuevo documento de producto dentro de la colección global
         await addDoc(collection(db, "products"), productData);
         toast.success("Producto creado con éxito");
       }
@@ -97,11 +108,11 @@ export function AdminPage() {
     }
   };
 
+  // Remover de forma permanente el documento del producto seleccionado en la base de datos
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
     try {
-      // ELIMINAR (D del CRUD) en Firestore
       await deleteDoc(doc(db, "products", id));
       toast.success("Producto eliminado");
     } catch (error) {
@@ -110,6 +121,7 @@ export function AdminPage() {
     }
   };
 
+  // Modificar el estado del pedido coordinando la actualización con el contexto de la aplicación
   const handleStatusChange = async (orderId: string, status: Order["status"]) => {
     try {
       await updateOrderStatus(orderId, status);
@@ -135,7 +147,7 @@ export function AdminPage() {
         </TabsList>
 
         <TabsContent value="products" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Formulario */}
+          {/* Formulario operativo de Altas y Modificaciones de catálogo */}
           <Card className="lg:col-span-1 h-fit">
             <CardHeader>
               <CardTitle>{editingProduct ? "Editar Producto" : "Agregar Producto"}</CardTitle>
@@ -145,39 +157,39 @@ export function AdminPage() {
               <form onSubmit={handleProductSubmit} className="space-y-4">
                 <div className="space-y-1">
                   <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" value={name} onChange={e => setName(e.target.value)} required />
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="desc">Descripción</Label>
-                  <Input id="desc" value={description} onChange={e => setDescription(e.target.value)} required />
+                  <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} required />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor="price">Precio (MXN)</Label>
-                    <Input id="price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required />
+                    <Input id="price" type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="stock">Stock Inicial</Label>
-                    <Input id="stock" type="number" value={stock} onChange={e => setStock(e.target.value)} required />
+                    <Input id="stock" type="number" value={stock} onChange={(e) => setStock(e.target.value)} required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor="category">Categoría</Label>
-                    <Input id="category" placeholder="Ej: Caballero" value={category} onChange={e => setCategory(e.target.value)} required />
+                    <Input id="category" placeholder="Ej: Caballero" value={category} onChange={(e) => setCategory(e.target.value)} required />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="sub">Subcategoría</Label>
-                    <Input id="sub" placeholder="Ej: Casual" value={subcategory} onChange={e => setSubcategory(e.target.value)} required />
+                    <Input id="sub" placeholder="Ej: Casual" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="image">URL de Imagen</Label>
-                  <Input id="image" placeholder="https://..." value={image} onChange={e => setImage(e.target.value)} />
+                  <Input id="image" placeholder="https://..." value={image} onChange={(e) => setImage(e.target.value)} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="threshold">Alerta Stock Bajo</Label>
-                  <Input id="threshold" type="number" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} required />
+                  <Input id="threshold" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} required />
                 </div>
 
                 <div className="flex gap-2 pt-2">
@@ -194,7 +206,7 @@ export function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Tabla de Productos */}
+          {/* Tabla informativa del estado actual del inventario */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle>Inventario Global</CardTitle>
@@ -211,7 +223,7 @@ export function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map(product => (
+                  {products.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.category} ({product.subcategory})</TableCell>
@@ -237,7 +249,7 @@ export function AdminPage() {
           </Card>
         </TabsContent>
 
-        {/* Listado de Pedidos Globales */}
+        {/* Control logístico y desglose operacional de pedidos */}
         <TabsContent value="orders">
           <Card>
             <CardHeader>
@@ -249,22 +261,20 @@ export function AdminPage() {
                   <TableRow>
                     <TableHead>ID Pedido</TableHead>
                     <TableHead>Fecha</TableHead>
-                    <TableHead>Productos y Entrega</TableHead> {/*NUEVA COLUMNA */}
+                    <TableHead>Productos y Entrega</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Estado Actual</TableHead>
                     <TableHead className="text-right">Cambiar Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map(order => (
-                    <TableRow key={order.id} className="align-top"> {/* align-top para que no se descuadre si hay muchos productos */}
+                  {orders.map((order) => (
+                    <TableRow key={order.id} className="align-top">
                       <TableCell className="font-mono text-xs pt-4">#{order.id}</TableCell>
                       <TableCell className="pt-4">{order.createdAt.toLocaleDateString()}</TableCell>
                       
-                      {/*DESGLOSE DE PRODUCTOS Y LOGÍSTICA */}
                       <TableCell className="pt-4">
                         <div className="space-y-2">
-                          {/* Lista de productos comprados */}
                           <div className="space-y-1">
                             {order.items.map((item, idx) => (
                               <div key={idx} className="text-xs text-muted-foreground">
@@ -274,7 +284,6 @@ export function AdminPage() {
                             ))}
                           </div>
                           
-                          {/* Detalles de entrega / recogida */}
                           <div className="text-[11px] pt-1.5 border-t border-dashed">
                             {order.deliveryMethod === "home" ? (
                               <div>
@@ -319,4 +328,3 @@ export function AdminPage() {
     </div>
   );
 }
-

@@ -8,6 +8,14 @@ import { useApp } from "../../context/AppContext";
 import { Alert, AlertDescription } from "../ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página que renderiza el formulario de inicio de sesión.
+ * Permite a los usuarios autenticarse mediante sus credenciales de acceso,
+ * procesando y homologando las excepciones emitidas por Firebase Auth.
+ */
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +24,7 @@ export function LoginPage() {
   const { login } = useApp();
   const navigate = useNavigate();
 
+  // Gestionar el envío del formulario enviando las credenciales al servicio de autenticación
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -26,7 +35,8 @@ export function LoginPage() {
       navigate("/");
     } catch (err: any) {
       console.error(err);
-      // Control de errores comunes de Firebase Auth
+      
+      // Mapear excepciones técnicas comunes de Firebase Auth a un formato legible para el usuario
       if (
         err.code === "auth/invalid-credential" || 
         err.code === "auth/wrong-password" || 
@@ -54,6 +64,7 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Mostrar la alerta de retroalimentación únicamente si existe un fallo de autenticación */}
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="size-4" />
@@ -86,6 +97,7 @@ export function LoginPage() {
               />
             </div>
 
+            {/* Alternar el estado visual del botón para prevenir peticiones concurrentes */}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>

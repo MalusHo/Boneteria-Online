@@ -8,6 +8,14 @@ import { useApp } from "../../context/AppContext";
 import { Alert, AlertDescription } from "../ui/alert";
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página que renderiza el formulario de registro de nuevos usuarios.
+ * Gestiona la validación de credenciales de forma local y delega la creación de la 
+ * cuenta al proveedor de servicios de autenticación.
+ */
 export function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,15 +26,18 @@ export function SignupPage() {
   const { signup } = useApp();
   const navigate = useNavigate();
 
+  // Procesar el envío del formulario realizando validaciones previas antes del registro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    // Garantizar que ambas contraseñas ingresadas por el usuario sean idénticas
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
     }
 
+    // Cumplir con la longitud mínima requerida por las políticas de seguridad de Firebase
     if (password.length < 6) {
       setError("La contraseña debe tener al menos 6 caracteres");
       return;
@@ -39,6 +50,7 @@ export function SignupPage() {
       navigate("/");
     } catch (err: any) {
       console.error(err);
+      // Mapear los códigos de error técnicos de Firebase a mensajes legibles para el usuario
       if (err.code === "auth/email-already-in-use") {
         setError("Este email ya se encuentra registrado por otro usuario.");
       } else if (err.code === "auth/invalid-email") {
@@ -71,6 +83,7 @@ export function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Desplegar banner de alerta únicamente si existe un mensaje de error activo */}
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="size-4" />
@@ -131,6 +144,7 @@ export function SignupPage() {
               />
             </div>
 
+            {/* Alternar el contenido del botón para dar retroalimentación visual de carga */}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>

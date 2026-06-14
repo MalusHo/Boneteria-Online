@@ -6,11 +6,19 @@ import { Input } from "../ui/input";
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 
+
+// --- COMPONENTE PRINCIPAL ---
+
+/**
+ * Componente de página que renderiza el carrito de compras del usuario.
+ * Permite visualizar los productos seleccionados, modificar sus cantidades
+ * respetando el límite de existencias, eliminar artículos y proceder al pago.
+ */
 export function CartPage() {
   const { cart, removeFromCart, updateCartQuantity, user } = useApp();
   const navigate = useNavigate();
 
-  // Bloqueo de seguridad si no hay sesión activa
+  // Restringir el acceso a la vista si no se ha detectado una sesión activa
   if (!user) {
     return (
       <div className="text-center py-12">
@@ -22,6 +30,7 @@ export function CartPage() {
 
   const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
+  // Mostrar una pantalla vacía opcional con llamado a la acción si el carrito no tiene elementos
   if (cart.length === 0) {
     return (
       <div className="text-center py-12">
@@ -38,7 +47,7 @@ export function CartPage() {
       <h1 className="text-3xl font-bold">Carrito de Compras</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Lista de productos en el carrito */}
+        {/* Desplegar la lista de productos actualmente agregados al carrito */}
         <div className="lg:col-span-2 space-y-4">
           {cart.map((item) => (
             <Card key={item.product.id}>
@@ -86,7 +95,8 @@ export function CartPage() {
                         value={item.quantity}
                         onChange={(e) => {
                           const value = parseInt(e.target.value) || 1;
-                          // Evita que el cliente pida más del stock disponible real en Firestore
+                          
+                          // Evitar que el cliente solicite una cantidad superior al stock real en Firestore
                           updateCartQuantity(item.product.id, Math.min(value, item.product.stock));
                         }}
                         className="w-16 text-center"
@@ -112,7 +122,7 @@ export function CartPage() {
           ))}
         </div>
 
-        {/* Resumen de Compra Fijo */}
+        {/* Panel lateral fijo con el desglose y resumen financiero de la compra */}
         <div className="lg:col-span-1">
           <Card className="sticky top-20">
             <CardHeader>
