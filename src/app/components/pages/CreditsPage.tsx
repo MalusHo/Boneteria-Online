@@ -23,7 +23,7 @@ export function CreditsPage() {
             Equipo de Desarrollo
           </h1>
           <p className="text-xl text-muted-foreground max-w-xl mx-auto">
-            Este proyecto fue diseñado, estructurado y programado con dedicación por el siguiente equipo de desarrollo.
+            Este proyecto fue diseñado, estructurado y programado con dedicación por nosotros.
           </p>
         </div>
 
