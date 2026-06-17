@@ -71,10 +71,15 @@ function AppContent() {
 
           <button 
             onClick={() => logout()}
-            style={{ width: "100%", padding: "12px", backgroundColor: "transparent", color: "#ef4444", border: "1px solid #ef4444", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}
+            style={{ width: "100%", padding: "12px", backgroundColor: "transparent", color: "#ef4444", border: "1px solid #ef4444", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", marginBottom: "15px" }}
           >
             Salir / Usar otra cuenta
           </button>
+
+          {/* Enlace rápido de acceso directo */}
+          <a href="/credits" style={{ color: "#9ca3af", textDecoration: "underline", fontSize: "14px" }}>
+            Ver créditos del equipo de desarrollo
+          </a>
         </div>
       </div>
     );

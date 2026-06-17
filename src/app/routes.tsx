@@ -8,8 +8,8 @@ import { LoginPage } from "./components/pages/LoginPage";
 import { SignupPage } from "./components/pages/SignupPage";
 import { OrdersPage } from "./components/pages/OrdersPage";
 import { ForgotPasswordPage } from "./components/pages/PasswordRecovery";
-
-// --- CONFIGURACIÓN DE RUTAS ---
+// 1. Importa la nueva página de créditos
+import { CreditsPage } from "./components/pages/CreditsPage";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +24,8 @@ export const router = createBrowserRouter([
       { path: "login", Component: LoginPage },
       { path: "signup", Component: SignupPage }, 
       { path: "forgot-password", Component: ForgotPasswordPage }, 
+      // 2. Registra la ruta de créditos
+      { path: "credits", Component: CreditsPage }, 
     ],
   },
 ]);
