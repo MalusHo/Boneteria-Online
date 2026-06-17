@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  sendEmailVerification
+  sendEmailVerification,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import {
   collection,
@@ -77,6 +78,7 @@ interface AppContextType {
   isEmailVerified: boolean;
   resendVerification: () => Promise<void>;
   checkVerificationStatus: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 
@@ -308,6 +310,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await updateDoc(orderRef, { status });
   };
 
+  /**
+   * Envía un correo electrónico de restablecimiento de contraseña utilizando Firebase Auth.
+   * @param email Dirección de correo del usuario que solicita la recuperación.
+   */
+  const resetPassword = async (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -323,6 +333,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         clearCart,
         updateCartQuantity,
+        resetPassword,
         createOrder,
         updateOrderStatus,
         isEmailVerified,
