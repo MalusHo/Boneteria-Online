@@ -16,7 +16,6 @@ import {
   onSnapshot,
   query,
   where,
-  addDoc,
   runTransaction,
   updateDoc
 } from "firebase/firestore";
@@ -103,19 +102,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Almacenar el estado de verificación nativo provisto por el proveedor de Auth
-        setIsEmailVerified(firebaseUser.emailVerified);
-
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
+          const userData = userDoc.data() as Omit<UserProfile, "uid">;
+          
           setUser({
             uid: firebaseUser.uid,
-            ...userDoc.data()
-          } as UserProfile);
+            ...userData
+          });
+
+          // Si el rol es admin, forzamos la verificación a true para omitir la pantalla de bloqueo
+          if (userData.role === "admin") {
+            setIsEmailVerified(true);
+          } else {
+            setIsEmailVerified(firebaseUser.emailVerified);
+          }
+          
         } else {
+          // Fallback por si creas el usuario en Auth pero aún no creas su doc en Firestore
           setUser(null);
+          setIsEmailVerified(firebaseUser.emailVerified);
         }
       } else {
         setUser(null);
@@ -147,7 +155,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     let ordersQuery = collection(db, "orders");
     
-    // Restringir la consulta si el usuario no cuenta con atribuciones de administrador
     if (user.role !== "admin") {
       ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid)) as any;
     }
@@ -162,7 +169,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
       }) as Order[];
       
-      // Organizar cronológicamente los registros de forma descendente
       docs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       setOrders(docs);
     });
@@ -190,18 +196,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     await setDoc(doc(db, "users", firebaseUser.uid), profileData);
     
-    // Mantener la sesión activa temporalmente para permitir el flujo de la vista de bloqueo por verificación
     setUser({ uid: firebaseUser.uid, ...profileData });
     setIsEmailVerified(false);
   };
 
-  // Finalizar la sesión actual del cliente y limpiar el estado de memoria del carrito local
   const logout = async () => {
     await signOut(auth);
     setCart([]);
   };
 
-  // Reenviar el enlace de validación al buzón del usuario actualmente en proceso de registro
   const resendVerification = async () => {
     if (auth.currentUser) {
       await sendEmailVerification(auth.currentUser);
@@ -210,20 +213,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Forzar la actualización del token de seguridad para validar el estatus del email del usuario
   const checkVerificationStatus = async () => {
     if (auth.currentUser) {
-      // Sincronizar el estado del usuario recargando los atributos del proveedor
-      await auth.currentUser.reload();
-      
-      // Renovar los claims del token para asegurar que las reglas de seguridad de Firestore no rechacen las peticiones
-      await auth.currentUser.getIdToken(true); 
+      // Si ya sabemos que es admin en el estado local, mantenemos verificado en true
+      if (user?.role === "admin") {
+        setIsEmailVerified(true);
+        return;
+      }
 
+      await auth.currentUser.reload();
+      await auth.currentUser.getIdToken(true); 
       setIsEmailVerified(auth.currentUser.emailVerified);
     }
   };
 
-  // Incorporar un producto al carrito controlando que no exceda las existencias reales
   const addToCart = (product: Product, quantity: number) => {
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex((item) => item.product.id === product.id);
@@ -237,15 +240,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Remover por completo un artículo del listado del carrito actual
   const removeFromCart = (productId: string) => {
     setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
   };
 
-  // Vaciar la totalidad de los artículos del carrito
   const clearCart = () => setCart([]);
 
-  // Modificar de forma explícita el número de piezas deseadas para un artículo del carrito
   const updateCartQuantity = (productId: string, quantity: number) => {
     setCart((prevCart) =>
       prevCart.map((item) =>
@@ -256,14 +256,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  // Registrar un pedido garantizando la atomicidad del stock mediante transacciones de Firestore
   const createOrder = async (orderData: Omit<Order, "id" | "userId" | "createdAt">) => {
     if (!user) throw new Error("Debes iniciar sesión para comprar");
 
     await runTransaction(db, async (transaction) => {
       const stocksToUpdate: { productRef: any; newStock: number }[] = [];
 
-      // Fase de Lectura (Reads): Validar existencias de cada artículo de forma aislada
       for (const item of orderData.items) {
         const productRef = doc(db, "products", item.product.id);
         const productSnap = await transaction.get(productRef);
@@ -278,21 +276,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           throw new Error(`No hay suficiente inventario disponible para ${item.product.name}.`);
         }
 
-        // Retener temporalmente los cálculos en memoria para cumplir la restricción secuencial de la transacción
         stocksToUpdate.push({
           productRef,
           newStock: currentStock - item.quantity
         });
       }
 
-      // Fase de Escritura (Writes): Actualizar de manera simultánea los inventarios modificados
       for (const update of stocksToUpdate) {
         transaction.update(update.productRef, {
           stock: update.newStock
         });
       }
 
-      // Generar el documento final que representa la orden de compra aprobada
       const orderRef = doc(collection(db, "orders"));
       transaction.set(orderRef, {
         ...orderData,
@@ -304,16 +299,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearCart();
   };
 
-  // Modificar el estatus logístico y operacional de una orden específica
   const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
     const orderRef = doc(db, "orders", orderId);
     await updateDoc(orderRef, { status });
   };
 
-  /**
-   * Envía un correo electrónico de restablecimiento de contraseña utilizando Firebase Auth.
-   * @param email Dirección de correo del usuario que solicita la recuperación.
-   */
   const resetPassword = async (email: string) => {
     return sendPasswordResetEmail(auth, email);
   };
@@ -346,9 +336,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Hook personalizado para consumir de manera segura el contexto global de la aplicación.
- */
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {
