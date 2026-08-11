@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "boneteriaec",
     "public": "dist",
     "ignore": [
       "firebase.json",

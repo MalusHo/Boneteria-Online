@@ -69,8 +69,8 @@ Sigue estos pasos para levantar el entorno de desarrollo local:
 
 ### 1. Clonar el repositorio privado
 ```bash
-git clone [https://github.com/MalusHo/Carrito_Villegas_Repo.git](https://github.com/MalusHo/Carrito_Villegas_Repo.git)
-cd Carrito_Villegas_Repo
+git clone [https://github.com/MalusHo/Boneteria-Online.git]https://github.com/MalusHo/Boneteria-Online.git)
+cd Boneteria-Online
 ```
 
 ## 2. Instalar las dependencias del proyecto
@@ -101,6 +101,10 @@ Para verificar la integridad de los tipos de TypeScript y generar el build optim
 ```bash  
 npm run build
 ```
+
+## Web del proyecto
+Puedes entrar a la web para verificarla por el siguiente link: https://boneteriaec.web.app/
+
 ### Notas de Seguridad y Git
   
 El repositorio cuenta con un archivo .gitignore estricto que previene la fuga de credenciales locales (.env), carpetas de dependencias pesadas (node_modules/), y directorios temporales de compilación en producción (dist/, build/), garantizando un entorno de desarrollo limpio y seguro para el equipo de trabajo.
