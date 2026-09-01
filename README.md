@@ -1,9 +1,4 @@
-
-  # Carrito de compras app
-
-  This is a code bundle for Carrito de compras app. The original project is available at https://www.figma.com/design/ltTxg2H4vILCzvxjvxfYPN/Carrito-de-compras-app.
-
-  # 🛒 Application - Carrito de Compras con Firebase & React
+  # 🛒 Aplicacion - Carrito de Compras con Firebase & React
 
 Una aplicación web de comercio electrónico moderna, rápida y segura construida con **React**, **TypeScript** y **Firebase**. El sistema cuenta con autenticación de usuarios, gestión de carrito en tiempo real, control de accesos por roles (Admin/Usuario) y un sistema robusto de procesamiento de pedidos con validación atómica de inventario.
 
